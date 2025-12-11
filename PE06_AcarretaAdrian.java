@@ -20,6 +20,13 @@ public class PE06_AcarretaAdrian {
         String[] players = new String[n];
         int[] positions = new int[n];
         int[] penalties = new int[n];
+        int[] gooses = {5, 9, 14, 18, 23, 27, 32, 36, 41, 45, 50, 54, 59, 63};
+        int[] bridges = {6, 12};
+        int fonda = 19;
+        int labyrinth = 42;
+        int jail = 52;
+        int death = 58;
+        int gooseGarden = 63;
         setDefaultValues(positions, penalties);
         chooseNames(s, players);
         newGame(players, positions, penalties);
@@ -79,7 +86,7 @@ public class PE06_AcarretaAdrian {
 
     public void chooseNames(Scanner s, String[] players) {
         for (int i=0;i<players.length;i++) {
-            System.out.printf(YELLOW+"\n(?) Please enter player %s name: ",(i+1)+RESET);
+            System.out.printf(YELLOW+"\n(?) Please enter player %s name: %s",(i+1),RESET);
             players[i] = s.nextLine();
         }
     }

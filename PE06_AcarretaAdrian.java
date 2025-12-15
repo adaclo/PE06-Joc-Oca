@@ -20,17 +20,11 @@ public class PE06_AcarretaAdrian {
         String[] players = new String[n];
         int[] positions = new int[n];
         int[] penalties = new int[n];
-        int[] gooses = {5, 9, 14, 18, 23, 27, 32, 36, 41, 45, 50, 54, 59, 63};
-        int[] bridges = {6, 12};
-        int fonda = 19;
-        int labyrinth = 42;
-        int jail = 52;
-        int death = 58;
-        int gooseGarden = 63;
-        setDefaultValues(positions, penalties);
+        int[] turnPlayer = new int[n];
+        setDefaultValues(positions, penalties, turnPlayer);
         chooseNames(s, players);
-        newGame(players, positions, penalties);
-    }
+        newGame(players, positions, penalties, turnPlayer, s);
+    } 
 
     public int chooseNumPlayers(Scanner s) {
         Boolean validNum=false;
@@ -47,32 +41,91 @@ public class PE06_AcarretaAdrian {
         return number;
     }
 
-    public void setDefaultValues(int[] positions, int[] penalties) {
+    public void setDefaultValues(int[] positions, int[] penalties, int[] turnPlayer) {
         for (int i=0;i<positions.length;i++) {
             positions[i]=0;
             penalties[i]=0;
+            turnPlayer[i]=0;
         }
     }
 
-    public void newGame(String[] players, int[] positions, int[] penalties) {
+    public void newGame(String[] players, int[] positions, int[] penalties, int[] turnPlayer, Scanner s) {
         int dices=2;
         int turns=0;
         Boolean end=false;
 
         while (!end) {
             for (int i=0;i<players.length;i++) {
-
-                turns++;
+                newTurn(players, positions, penalties, turnPlayer, turns, dices, s, i);
             }
         }
     }
 
-    public void newTurn(String[] players, int[] positions, int[] penalties, int turns, int dices) {
-        int dice1=throwDices();
+    public void newTurn(String[] players, int[] positions, int[] penalties, int[] turnPlayer, int turns, int dices, Scanner s, int player) {
+                System.out.printf("\nIt's the turn of player %d, %s",(player+1),players[player]);
+                String r = "";
+                int dice1=0,dice2=0;
+                Boolean newTurn=false;
+                int[] gooses = {5, 9, 14, 18, 23, 27, 32, 36, 41, 45, 50, 54, 59, 63};
+                int[] bridges = {6, 12};
+                int fonda = 19;
+                int well = 31;
+                int labyrinth = 42;
+                int jail = 52;
+                int death = 58;
+                int gooseGarden = 63;
+                int dicesResult=0;
+                if (penalties[player]==0) {
+                    while(!r.equalsIgnoreCase("tiro")){
+                        System.out.print("\n>> ");
+                        r = s.next();
+                        if (!r.equalsIgnoreCase("tiro")) {
+                            System.out.println("\nPlease enter 'tiro' to throw dices");
+                        } else {
+                            if (dices==2) {
+                                dice1 = throwDices();
+                                dice2 = throwDices();
+                            } else {
+                                dice1 = throwDices();
+                                dice2 = 0;
+                            }
+                        }
+                    }
+                    if(dices==2){
+                        System.out.printf("\nYou got a %d and a %d = %d",dice1,dice2,(dice1+dice2));
+                        dicesResult=dice1+dice2;
+                    } else {
+                        System.out.printf("\nYou got a %d",dice1);
+                        dicesResult=dice1;
+                    }
+                    int nextPosition = positions[player]+dicesResult;
+                    if (turnPlayer[player]==0) {
+                        if((dice1==3&&dice2==6)||(dice1==6&&dice2==3)) {
+                            positions[player]=26;
+                            System.out.println("From dice to dice, and I throw because it's my turn");
+                            newTurn=true;
+                        } else if((dice1==4&&dice2==5)||(dice1==5&&dice2==4)) {
+                            positions[player]=53;
+                            System.out.println("From dice to dice, and I throw because it's my turn");
+                            newTurn=true;
+                        }
+                    } else if (nextPosition==death){
+                        positions[player]=0;
+                        System.out.println(RED+"You fell into death box, you will be redirected to position 0.");
+                    }
+                } else {
+                    System.out.println(RED+"You have a penalty of "+penalties[player]+" turns without playing"+RESET);
+                    penalties[player]-=1;
+                    if(penalties[player]==0) {
+                        System.out.println(GREEN+"Next turn you can continue playing!"+RESET);
+                    } else {
+                        System.out.println(YELLOW+"Wait "+penalties[player]+" more turns to continue playing..."+RESET);
+                    }
+                }
+                turns++;
+        
 
-        if (turns==0) {
-
-        }
+        
     }
 
     public int throwDices() {

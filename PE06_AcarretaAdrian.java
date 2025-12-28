@@ -53,27 +53,23 @@ public class PE06_AcarretaAdrian {
         int dices=2;
         int turns=0;
         Boolean end=false;
+        Boolean playAgain=false;
 
         while (!end) {
             for (int i=0;i<players.length;i++) {
-                newTurn(players, positions, penalties, turnPlayer, turns, dices, s, i);
+                playAgain = newTurn(players, positions, penalties, turnPlayer, turns, dices, s, i, playAgain);
+                if (playAgain) {
+                    playAgain = newTurn(players, positions, penalties, turnPlayer, turns, dices, s, i, playAgain);
+                }
+                //checkLastPosition()
             }
         }
     }
 
-    public void newTurn(String[] players, int[] positions, int[] penalties, int[] turnPlayer, int turns, int dices, Scanner s, int player) {
+    public Boolean newTurn(String[] players, int[] positions, int[] penalties, int[] turnPlayer, int turns, int dices, Scanner s, int player, Boolean playAgain) {
         System.out.printf("\nIt's the turn of player %d, %s",(player+1),players[player]);
         String r = "";
         int dice1=0,dice2=0;
-        Boolean newTurn=false;
-        int[] gooses = {5, 9, 14, 18, 23, 27, 32, 36, 41, 45, 50, 54, 59, 63};
-        int[] bridges = {6, 12};
-        int fonda = 19;
-        int well = 31;
-        int labyrinth = 42;
-        int jail = 52;
-        int death = 58;
-        int gooseGarden = 63;
         int dicesResult=0;
         Boolean penalty = checkPenalties(penalties, player);
 
@@ -101,34 +97,122 @@ public class PE06_AcarretaAdrian {
                 System.out.printf("\nYou got a %d",dice1);
                 dicesResult=dice1;
             }
-            int nextPosition = positions[player]+dicesResult;
-            newTurn = checkSpecialDices(positions, player, turnPlayer, dice1, dice2);
-            if (nextPosition==death){
-                positions[player]=0;
-                System.out.println(RED+"\nYou fell into death box, you will be redirected to position 0.");
+            playAgain=false;
+            int oldPosition=positions[player];
+            if (positions[player]+dicesResult<63) {
+                positions[player]=+dicesResult;
+            } else { // Si se sobrepasa de 63 se le resta el sobrante
+                positions[player]=-(positions[player]+dicesResult)-63;
+            }
+            playAgain = checkSpecialDices(positions, player, turnPlayer, dice1, dice2, playAgain);
+            checkDeath(positions, player);
+            playAgain = checkGooses(positions, player, playAgain);
+            playAgain = checkBridges(positions, player, playAgain);
+            checkHostel(positions, player, penalties);
+            checkWell(positions, player, penalties, players);
+            checkLabyrinth(positions, player);
+            checkJail(positions, player, penalties);
+
+            if (oldPosition<positions[player]) {
+                System.out.printf(YELLOW+"\nAdvance to box %d.",positions[player]+RESET);
+            } else {
+                System.out.printf(YELLOW+"\nYou go back to box %d",positions[player]+RESET);
             }
         }
         turnPlayer[player]++;
         turns++;
-        if(newTurn) {
-            newTurn(players, positions, penalties, turnPlayer, turns, dicesResult, s, player);
+        return playAgain;
+    }
+
+    public void checkJail(int[] positions, int player, int[] penalties) {
+        int jail = 52;
+        if (positions[player]==jail) {
+            penalties[player]=3;
+            System.out.println(RED+"You have been sent to jail and now you cannot move for 3 turns."+RESET);
         }
     }
 
-    public boolean checkSpecialDices(int[] positions, int player, int[] turnPlayer, int dice1, int dice2) {
-        Boolean newTurn=false;
+    public void checkLabyrinth(int[] positions, int player) {
+        int labyrinth = 42;
+        if (positions[player]==labyrinth) {
+            positions[player]=39;
+            System.out.println(RED+"You've gotten lost in the labyrinth."+RESET);
+        }
+    }
+
+    public void checkWell(int[] positions, int player, int[] penalties, String[] players) {
+        int well = 31;
+        if (positions[player]==well) {
+            for (int otherPlayer=0;otherPlayer<positions.length;otherPlayer++) {
+                if (positions[otherPlayer]==well) {
+                    if (otherPlayer!=player) {
+                        penalties[otherPlayer]=0;
+                        System.out.printf(YELLOW+"\nThere was already someone in the well, and now %s will go on the next shift.",players[otherPlayer]+RESET);
+                    }
+                }
+            }
+            penalties[player]=2;
+            System.out.println(RED+"You have fallen into the well and now you cannot throw for 2 turns."+RESET);
+        }
+    }
+
+    public void checkHostel(int[] positions, int player, int[] penalties) {
+        int hostel = 19;
+        if (positions[player]==hostel) {
+            penalties[player]=1;
+        }
+    }
+
+    public boolean checkBridges(int[] positions, int player, boolean playAgain) {
+        int[] bridges = {6, 12};
+        for (int i=0; i<bridges.length; i++) {
+            if (bridges[i]==positions[player]) {
+                System.out.printf(GREEN+"\nBox #%d: From bridge to bridge and shoot because the current carries me away",positions[player]+RESET);
+                if (i==bridges.length-1) {
+                    positions[player]=bridges[i-1];
+                } else {
+                    positions[player]=bridges[i+1];
+                }
+                playAgain=true;
+            }
+        }
+
+        return playAgain;
+    }
+
+    public boolean checkGooses(int[] positions, int player, boolean playAgain) {
+        int[] gooses = {5, 9, 14, 18, 23, 27, 32, 36, 41, 45, 50, 54, 59, 63};
+        for (int i=0; i<gooses.length; i++) {
+            if (gooses[i]==positions[player]) {
+                System.out.printf(GREEN+"\nBox #%d: Goose. From goose to goose and on I go because it's my turn.",positions[player]+RESET);
+                positions[player]=gooses[i+1];
+                playAgain=true;
+            }
+        }
+        return playAgain;
+    }
+
+    public void checkDeath(int[] positions, int player) {
+        int death = 58;
+        if (positions[player]==death) {
+            positions[player]=0;
+            System.out.println(RED+"\nYou fell into death box, you will be redirected to position 0.");
+        }
+    }
+
+    public boolean checkSpecialDices(int[] positions, int player, int[] turnPlayer, int dice1, int dice2, boolean playAgain) {
         if (turnPlayer[player]==0) {
             if((dice1==3&&dice2==6)||(dice1==6&&dice2==3)) {
                 positions[player]=26;
                 System.out.println("\nFrom dice to dice, and I throw because it's my turn");
-                newTurn=true;
+                playAgain=true;
             } else if((dice1==4&&dice2==5)||(dice1==5&&dice2==4)) {
                 positions[player]=53;
                 System.out.println("\nFrom dice to dice, and I throw because it's my turn");
-                newTurn=true;
+                playAgain=true;
             }
         }
-        return newTurn;
+        return playAgain;
     }
 
     public int throwDices() {

@@ -56,20 +56,22 @@ public class PE06_AcarretaAdrian {
 
         while (!end) {
             for (int i=0;i<players.length;i++) {
-                playAgain = newTurn(players, positions, penalties, turnPlayer, dices, s, i, playAgain);
-                if (playAgain) {
+                if (!end) {
                     playAgain = newTurn(players, positions, penalties, turnPlayer, dices, s, i, playAgain);
-                }
-                end = checkLastPosition(positions, i);
+                    while (playAgain) {
+                        playAgain = newTurn(players, positions, penalties, turnPlayer, dices, s, i, playAgain);
+                    }
+                    end = checkLastPosition(positions, i);
+                } 
                 if (end) {
                     int turns=0;
                     for (int j=0;j<positions.length;j++) {
-                        turns=+turnPlayer[j];
+                        turns+=turnPlayer[j];
                     }
                     System.out.println(YELLOW+"\n"+players[i]+" has won the game!"+RESET);
                     System.out.println("\nThe game ended with a total of "+YELLOW+turns+RESET+" turns.");
                     for (int player=0;player<players.length;player++) {
-                        System.out.printf("\n%s: %d turns",players[player],turnPlayer[player]);
+                        System.out.printf("\n%s: %s%d%s turns",players[player],YELLOW,turnPlayer[player],RESET);
                     }
                     
                 }
@@ -114,9 +116,10 @@ public class PE06_AcarretaAdrian {
             playAgain=false;
             int oldPosition=positions[player];
             if (positions[player]+dicesResult<63) {
-                positions[player]=+dicesResult;
+                positions[player]+=dicesResult;
             } else { // Si se sobrepasa de 63 se le resta el sobrante
-                positions[player]=-(positions[player]+dicesResult)-63;
+                int toRest = dicesResult-(63-positions[player]);
+                positions[player]=63-toRest;
             }
             playAgain = checkSpecialDices(positions, player, turnPlayer, dice1, dice2, playAgain);
             checkDeath(positions, player);
@@ -128,9 +131,9 @@ public class PE06_AcarretaAdrian {
             checkJail(positions, player, penalties);
 
             if (oldPosition<positions[player]) {
-                System.out.printf(YELLOW+"\nAdvance to position %d.",positions[player]+RESET);
+                System.out.println(YELLOW+"\nAdvance to position "+positions[player]+RESET);
             } else {
-                System.out.printf(YELLOW+"\nYou go back to position %d",positions[player]+RESET);
+                System.out.println(YELLOW+"\nYou go back to position "+positions[player]+RESET);
             }
         }
         turnPlayer[player]++;
@@ -150,7 +153,7 @@ public class PE06_AcarretaAdrian {
         int jail = 52;
         if (positions[player]==jail) {
             penalties[player]=3;
-            System.out.println(RED+"You have been sent to jail and now you cannot move for 3 turns."+RESET);
+            System.out.println(RED+"\nYou have been sent to jail and now you cannot move for 3 turns."+RESET);
         }
     }
 
@@ -158,7 +161,7 @@ public class PE06_AcarretaAdrian {
         int labyrinth = 42;
         if (positions[player]==labyrinth) {
             positions[player]=39;
-            System.out.println(RED+"You've gotten lost in the labyrinth."+RESET);
+            System.out.println(RED+"\nYou've gotten lost in the labyrinth."+RESET);
         }
     }
 
@@ -169,33 +172,38 @@ public class PE06_AcarretaAdrian {
                 if (positions[otherPlayer]==well) {
                     if (otherPlayer!=player) {
                         penalties[otherPlayer]=0;
-                        System.out.printf(YELLOW+"\nThere was already someone in the well, and now %s will go on the next shift.",players[otherPlayer]+RESET);
+                        System.out.printf("\n%sThere was already someone in the well, and now %s will go on the next turn.%s",YELLOW,players[otherPlayer],RESET);
                     }
                 }
             }
             penalties[player]=2;
-            System.out.println(RED+"You have fallen into the well and now you cannot throw for 2 turns."+RESET);
+            System.out.println(RED+"\nYou have fallen into the well and now you cannot throw for 2 turns."+RESET);
         }
     }
 
     public void checkHostel(int[] positions, int player, int[] penalties) {
         int hostel = 19;
         if (positions[player]==hostel) {
+            System.out.println(RED+"\nYou stay one night at the inn, so you miss a turn."+RESET);
             penalties[player]=1;
         }
     }
 
     public boolean checkBridges(int[] positions, int player, boolean playAgain) {
         int[] bridges = {6, 12};
+        Boolean alreadyMoved=false;
         for (int i=0; i<bridges.length; i++) {
             if (bridges[i]==positions[player]) {
-                System.out.printf(GREEN+"\nPosition #%d: From bridge to bridge and shoot because the current carries me away",positions[player]+RESET);
-                if (i==bridges.length-1) {
-                    positions[player]=bridges[i-1];
-                } else {
-                    positions[player]=bridges[i+1];
+                if (!alreadyMoved) {
+                    System.out.printf("\n%sPosition #%d: From bridge to bridge and shoot because the current carries me away%s",GREEN,positions[player],RESET);
+                    if (i==bridges.length-1) {
+                        positions[player]=bridges[i-1];
+                    } else {
+                        positions[player]=bridges[i+1];
+                    }
+                    playAgain=true;
+                    alreadyMoved=true;
                 }
-                playAgain=true;
             }
         }
 
@@ -204,11 +212,17 @@ public class PE06_AcarretaAdrian {
 
     public boolean checkGooses(int[] positions, int player, boolean playAgain) {
         int[] gooses = {5, 9, 14, 18, 23, 27, 32, 36, 41, 45, 50, 54, 59, 63};
+        Boolean alreadyMoved=false;
         for (int i=0; i<gooses.length; i++) {
             if (gooses[i]==positions[player]) {
-                System.out.printf(GREEN+"\nPosition #%d: Goose. From goose to goose and on I go because it's my turn.",positions[player]+RESET);
-                positions[player]=gooses[i+1];
-                playAgain=true;
+                if (positions[player]!=63) {
+                    if (!alreadyMoved) {
+                        System.out.printf("\n%sPosition #%d: Goose. From goose to goose and on I go because it's my turn.%s",GREEN,positions[player],RESET);
+                        positions[player]=gooses[i+1];
+                        playAgain=true;
+                        alreadyMoved=true;
+                    }
+                }
             }
         }
         return playAgain;
@@ -218,7 +232,7 @@ public class PE06_AcarretaAdrian {
         int death = 58;
         if (positions[player]==death) {
             positions[player]=0;
-            System.out.println(RED+"\nYou fell into death box, you will be redirected to position 0.");
+            System.out.println(RED+"\nYou fell into death position, you will be redirected to position 0.");
         }
     }
 
@@ -271,7 +285,7 @@ public class PE06_AcarretaAdrian {
 
     public void chooseNames(Scanner s, String[] players) {
         for (int i=0;i<players.length;i++) {
-            System.out.printf(YELLOW+"\n(?) Please enter player %s name: %s",(i+1),RESET);
+            System.out.printf("\n%s(?) Please enter player %s name: %s",YELLOW,(i+1),RESET);
             players[i] = s.nextLine();
         }
     }
